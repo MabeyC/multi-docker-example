@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t octavianlabs/client-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true octavianlabs/client-test npm test
+
+after_success:
+  - docker build -t octavianlabs/multi-client ./client
+  - docker build -t octavianlabs/multi-nginx ./nginx
+  - docker build -t octavianlabs/multi-server ./server
+  - docker build -t octavianlabs/multi-worker ./worker
+  # Login to docker CLI
+  - echo "$DOCKER_PASS" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push octavianlabs/multi-client
+  - docker push octavianlabs/multi-nginx
+  - docker push octavianlabs/multi-server
+  - docker push octavianlabs/multi-worker
